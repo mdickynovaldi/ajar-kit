@@ -4,7 +4,6 @@
 
 import { useState } from "react";
 import { Icon } from "@/components/ui/icon";
-import { useToast } from "@/components/ui/toast";
 import { EmptyState } from "@/components/ui/controls";
 import { SiteNav, SiteFooter } from "@/components/public/site-chrome";
 import { RevealScope } from "@/components/motion";
@@ -82,7 +81,6 @@ const FAQS: { q: string; a: string; cat: Kategori }[] = [
 ];
 
 export default function BantuanPage() {
-  const toast = useToast();
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<Kategori | null>(null);
 
@@ -197,17 +195,18 @@ export default function BantuanPage() {
                 Chat WhatsApp
               </h3>
               <p className="muted t-small" style={{ marginTop: 6 }}>
-                Balasan cepat di jam kerja (Senin–Jumat, 09.00–17.00 WIB).
+                0851-5626-2400 — balasan cepat di jam kerja (Senin–Jumat, 09.00–17.00 WIB).
               </p>
-              <button
-                type="button"
+              <a
                 className="btn btn-primary"
                 style={{ marginTop: 14 }}
-                onClick={() => toast("Membuka WhatsApp…")}
+                href="https://wa.me/6285156262400?text=Halo%20Admin%20AjarKit%2C%20saya%20ingin%20bertanya%2Fmemberi%20masukan."
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 <Icon name="share" />
                 Hubungi via WhatsApp
-              </button>
+              </a>
             </div>
             <div className="card pad-lg">
               <span className="doc-ic ic-blue">
@@ -220,15 +219,14 @@ export default function BantuanPage() {
                 Kirim pertanyaanmu ke halo@ajarkit.id — kami balas maksimal 1
                 hari kerja.
               </p>
-              <button
-                type="button"
+              <a
                 className="btn btn-secondary"
                 style={{ marginTop: 14 }}
-                onClick={() => toast("Membuka email…")}
+                href="mailto:halo@ajarkit.id?subject=Masukan%20AjarKit"
               >
                 <Icon name="mail" />
                 Kirim email
-              </button>
+              </a>
             </div>
           </div>
         </section>

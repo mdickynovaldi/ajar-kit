@@ -11,8 +11,6 @@ import { useToast } from "@/components/ui/toast";
 import { useApp } from "@/lib/store";
 import {
   DOC_TYPES,
-  FREE_QUOTA,
-  FREE_QUOTA_USED,
   KIT_LENGKAP,
   STATUS_META,
 } from "@/lib/constants";
@@ -135,7 +133,7 @@ export default function BerandaPage() {
         </div>
       )}
 
-      {/* Sapaan + indikator kredit/kuota (desktop) */}
+      {/* Sapaan + indikator kredit (desktop) */}
       <div className="greet-grid" style={{ marginBottom: 22 }}>
         <div>
           <h1 className="t-h1">Halo, {firstName(app.user.nama)} 👋</h1>
@@ -147,12 +145,6 @@ export default function BerandaPage() {
             <div className="strong" style={{ fontWeight: 700, fontSize: 20 }}>
               <span style={{ color: "var(--accent-500)" }}>◈</span>{" "}
               <span className="num">{app.credits}</span>
-            </div>
-          </div>
-          <div className="card pad" style={{ padding: "12px 16px" }}>
-            <div className="t-caption muted">KUOTA BULAN INI</div>
-            <div className="strong" style={{ fontWeight: 700, fontSize: 20 }}>
-              <span className="num">{FREE_QUOTA_USED}</span>/{FREE_QUOTA} dok
             </div>
           </div>
         </div>

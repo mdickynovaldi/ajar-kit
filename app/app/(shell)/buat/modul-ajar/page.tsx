@@ -44,7 +44,12 @@ export default function BuatModulAjarPage() {
   );
   const [materi, setMateri] = useState("Ekosistem & Rantai Makanan");
   const [alokasi, setAlokasi] = useState("4 JP × 2 pertemuan");
-  const [pertemuan, setPertemuan] = useState(2);
+  /* jumlah pertemuan dibaca otomatis dari teks alokasi waktu
+     ("4 JP × 2 pertemuan" → 2); tanpa kata "pertemuan" → 1; maks 16 */
+  const pertemuan = (() => {
+    const m = alokasi.match(/(\d+)\s*(?:x|×)?\s*pertemuan/i);
+    return Math.min(MAX_PERTEMUAN, Math.max(1, Number(m?.[1]) || 1));
+  })();
   const [semester, setSemester] = useState("Genap");
 
   /* jenjang berubah → daftar mapel ikut; mapel lama tak tersedia → reset */
@@ -60,8 +65,10 @@ export default function BuatModulAjarPage() {
   const [karakteristik, setKarakteristik] = useState("");
 
   /* Langkah 3 — Opsi & kualitas */
-  const [lkpd, setLkpd] = useState(true);
-  const [asesmen, setAsesmen] = useState(true);
+  /* default NONAKTIF: biaya default (mode hemat = 30) harus muat di bonus
+     50 kredit user free — LKPD/asesmen jadi pilihan sadar biaya */
+  const [lkpd, setLkpd] = useState(false);
+  const [asesmen, setAsesmen] = useState(false);
   const [agama, setAgama] = useState(false);
   const [gaya, setGaya] = useState("Formal");
   const [mode, setMode] = useState<QualityMode>("standar");
@@ -148,7 +155,10 @@ export default function BuatModulAjarPage() {
             />
           </Field>
           <div className="form-2">
-            <Field label="Alokasi waktu">
+            <Field
+              label="Alokasi waktu"
+              help={`Jumlah pertemuan dibaca otomatis dari sini (terbaca: ${pertemuan} pertemuan, maks ${MAX_PERTEMUAN}).`}
+            >
               <input
                 className="input"
                 value={alokasi}
@@ -163,24 +173,6 @@ export default function BuatModulAjarPage() {
               </select>
             </Field>
           </div>
-          <Field label="Jumlah pertemuan" help={`Maks ${MAX_PERTEMUAN} pertemuan per dokumen.`}>
-            <input
-              className="input"
-              type="number"
-              min={1}
-              max={MAX_PERTEMUAN}
-              value={pertemuan}
-              onChange={(e) =>
-                setPertemuan(
-                  Math.min(
-                    MAX_PERTEMUAN,
-                    Math.max(1, Math.round(Number(e.target.value)) || 1),
-                  ),
-                )
-              }
-              aria-label="Jumlah pertemuan"
-            />
-          </Field>
         </div>
       </StepPanel>
 
