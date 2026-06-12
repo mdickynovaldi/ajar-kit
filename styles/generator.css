@@ -1,0 +1,59 @@
+/* AjarKit — gaya khusus fitur: generator (diisi per halaman; nama kelas global, jangan bentrok dgn design system) */
+
+/* ---------- Stepper angka (jumlah aktivitas / butir / soal) ---------- */
+.gen-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 2px;
+  background: var(--surface);
+}
+.gen-stepper .iconbtn {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  font-weight: 600;
+}
+.gen-stepper .iconbtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.gen-stepper .iconbtn:disabled:hover {
+  background: transparent;
+}
+.gen-stepper .val {
+  min-width: 44px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-strong);
+}
+
+/* ---------- Bank Soal — komposisi kognitif (LOTS/MOTS/HOTS) ---------- */
+.bs-range {
+  width: 100%;
+  height: 28px;
+  accent-color: var(--primary-600);
+  cursor: pointer;
+}
+.bs-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.bs-bar span {
+  transition: width 0.2s ease;
+}
+.bs-lots {
+  background: var(--success);
+}
+.bs-mots {
+  background: var(--warning);
+}
+.bs-hots {
+  background: var(--primary-600);
+}

@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +40,21 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.env.local
+
+# ai
+/ai/
+
+# markdown files
+prd.md
+prd.MD
+posthog-setup-report.md
+CLAUDE.md
+AGENTS.MD
+AGENTS.md
+CLAUDE*
+CLAUDE.md
+/.claude/
+
+# ajarkit
+/Ajarkit/

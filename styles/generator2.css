@@ -1,0 +1,51 @@
+/* AjarKit — gaya khusus fitur: generator lanjutan (kit lengkap, RPS, generating) */
+
+/* ===== Kit Lengkap — kartu komponen tercentang ===== */
+.kit-comp { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 13px 14px; border: 1.5px solid var(--border); border-radius: var(--r-lg); background: var(--surface); cursor: pointer; transition: .15s; font: inherit; color: var(--text); }
+.kit-comp:hover { border-color: var(--primary-500); }
+.kit-comp.on { border-color: var(--primary-600); background: var(--primary-50); }
+.kit-comp .kc-check { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--border); display: grid; place-items: center; flex: none; color: transparent; background: var(--surface); transition: .15s; }
+.kit-comp.on .kc-check { background: var(--primary-600); border-color: var(--primary-600); color: #fff; }
+.kit-comp .kc-check svg { width: 13px; height: 13px; }
+.kit-comp .kc-cost { font-weight: 700; font-size: 14px; color: var(--text-strong); white-space: nowrap; flex: none; }
+.kit-comp .kc-cost .kc-gem { color: var(--accent-500); }
+.kit-ic-ai { background: var(--ai-gradient); color: #fff; }
+
+/* ===== RPS — baris CPMK & tabel 16 pertemuan (porting app-rps.html) ===== */
+.cpmk-row { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface-2); }
+.cpmk-row .tag { font-weight: 700; color: var(--primary-700); font-size: 13px; flex: none; padding-top: 9px; min-width: 64px; }
+.cpmk-row [contenteditable]:focus { outline: 2px solid var(--primary-500); border-radius: 4px; }
+.cpmk-row .cpmk-del { width: 32px; height: 32px; flex: none; color: var(--text-faint); }
+.cpmk-row .cpmk-del:hover { color: var(--error); }
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--r-lg); }
+.rps-table { min-width: 760px; }
+.rps-table td[contenteditable]:focus { outline: 2px solid var(--primary-500); border-radius: 4px; }
+
+/* ===== Generating — layar fokus (porting app-generating.html) ===== */
+.gen-wrap { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px;
+  background: radial-gradient(700px 380px at 50% -8%, color-mix(in srgb, var(--accent-500) 14%, transparent), transparent), var(--bg); }
+.gen-card { width: 100%; max-width: 480px; text-align: center; }
+.orb { width: 88px; height: 88px; border-radius: 50%; margin: 0 auto 22px; background: var(--ai-gradient); display: grid; place-items: center; color: #fff; position: relative; box-shadow: 0 12px 36px color-mix(in srgb, var(--accent-500) 40%, transparent); }
+.orb svg { width: 40px; height: 40px; animation: gen-pulse 1.6s ease-in-out infinite; }
+.orb::after { content: ""; position: absolute; inset: -8px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--primary-500) 40%, transparent); animation: gen-ring 1.6s ease-out infinite; }
+.orb.off { background: var(--surface-2); color: var(--text-muted); box-shadow: none; }
+.orb.off svg { animation: none; }
+.orb.off::after { animation: none; opacity: 0; }
+@keyframes gen-pulse { 50% { transform: scale(.85); opacity: .7; } }
+@keyframes gen-ring { 0% { transform: scale(.9); opacity: .8; } 100% { transform: scale(1.25); opacity: 0; } }
+.gsteps { text-align: left; margin-top: 24px; display: grid; gap: 12px; }
+.gstep { display: flex; gap: 11px; align-items: center; font-size: 14px; color: var(--text-faint); transition: .3s; }
+.gstep .gi { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--border); display: grid; place-items: center; flex: none; }
+.gstep .gi svg { width: 14px; height: 14px; }
+.gstep.active { color: var(--text-strong); font-weight: 600; }
+.gstep.active .gi { border-color: var(--primary-600); color: var(--primary-600); }
+.gstep.done { color: var(--text-muted); }
+.gstep.done .gi { background: var(--success); border-color: var(--success); color: #fff; }
+.gstep .spinner { width: 14px; height: 14px; }
+
+/* ===== Generating — hasil "Paket" Kit Lengkap (prd.md §8.3, design.md §9.F.6) ===== */
+.kit-pack { text-align: left; margin-top: 22px; display: grid; gap: 10px; }
+.kit-doc { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border: 1.5px solid var(--border); border-radius: var(--r-lg); background: var(--surface); color: var(--text); transition: .15s; }
+.kit-doc:hover { border-color: var(--primary-500); }
+.kit-doc .doc-ic { flex: none; }
+.kit-doc .kd-chev { width: 18px; height: 18px; flex: none; color: var(--text-faint); }

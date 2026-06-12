@@ -1,0 +1,47 @@
+/* AjarKit — gaya khusus fitur: settings (diisi per halaman; nama kelas global, jangan bentrok dgn design system) */
+
+/* ===== Pengaturan (porting Ajarkit/app-pengaturan.html) ===== */
+.set-grid { display: grid; gap: 22px; }
+@media (min-width: 880px) {
+  .set-grid { grid-template-columns: 200px 1fr; align-items: start; }
+}
+
+.set-subnav { display: flex; gap: 6px; overflow-x: auto; }
+@media (min-width: 880px) {
+  .set-subnav { flex-direction: column; position: sticky; top: 20px; }
+}
+.set-subnav a {
+  display: flex; align-items: center; gap: 9px; border: none; background: transparent;
+  padding: 10px 12px; border-radius: var(--r-md); font-weight: 600; font-size: 14px;
+  color: var(--text-muted); cursor: pointer; white-space: nowrap; text-align: left;
+  text-decoration: none;
+}
+.set-subnav a svg { width: 18px; height: 18px; }
+.set-subnav a.on { background: var(--primary-50); color: var(--primary-700); }
+
+.set-pane { animation: set-fade .2s ease; }
+@keyframes set-fade { from { opacity: 0; } }
+
+.theme-seg button { display: flex; align-items: center; gap: 6px; }
+.theme-seg svg { width: 16px; height: 16px; }
+
+.set-danger { border-color: color-mix(in srgb, var(--error) 35%, var(--border)); }
+
+.set-logo {
+  width: 54px; height: 54px; border-radius: 14px; background: var(--primary-50);
+  color: var(--primary-600); display: grid; place-items: center; flex: none;
+}
+.set-logo svg { width: 24px; height: 24px; }
+
+/* ===== Pusat Notifikasi (porting Ajarkit/app-notifikasi.html) ===== */
+.nitem {
+  display: flex; gap: 12px; padding: 14px 16px; align-items: flex-start;
+  text-decoration: none; position: relative; width: 100%; border: none;
+  background: transparent; text-align: left; font: inherit; color: inherit;
+  cursor: pointer; border-bottom: 1px solid var(--border);
+}
+.nitem:last-child { border-bottom: none; }
+.nitem.unread { background: var(--primary-50); }
+.nitem .ni { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+.nitem .ni svg { width: 18px; height: 18px; }
+.nitem .udot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary-600); flex: none; margin-top: 6px; }

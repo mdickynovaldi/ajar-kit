@@ -1,0 +1,123 @@
+/* AjarKit — gaya khusus fitur: marketing (landing, fitur, harga, tentang, bantuan).
+   Nama kelas global — .nav/.nav-inner/.links/.sticky-cta sudah ada di globals.css. */
+
+/* ===== Nav publik: hamburger + drawer (design.md §9.A.1 "Mobile: hamburger → drawer") ===== */
+.nav-burger { display: inline-flex; }
+@media (min-width: 880px){ .nav-burger { display: none; } }
+/* CTA inline disembunyikan < 880px (sudah tersedia di drawer hamburger) agar nav tak sesak */
+@media (max-width: 879.98px){ .nav-cta { display: none; } }
+.nav-drawer { display: grid; }
+.nav-drawer a { display: block; padding: 12px 10px; border-radius: var(--r-md); font-weight: 600; color: var(--text-strong); }
+.nav-drawer a:hover { background: var(--surface-2); }
+
+/* ===== Landing ===== */
+.hero { position: relative; overflow: hidden; }
+.hero::before { content: ""; position: absolute; inset: 0; z-index: -1;
+  background: radial-gradient(820px 420px at 78% -8%, color-mix(in srgb, var(--accent-500) 16%, transparent), transparent),
+              radial-gradient(720px 380px at 6% 4%, color-mix(in srgb, var(--primary-500) 16%, transparent), transparent); }
+.hero-grid { display: grid; gap: 36px; align-items: center; padding: 48px 0 24px; }
+@media (min-width: 900px){ .hero-grid { grid-template-columns: 1.05fr .95fr; padding: 72px 0 48px; } }
+.mock { aspect-ratio: 4/3.1; padding: 0; overflow: hidden; position: relative; }
+.mock .bar { height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 14px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.mock .bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--border); display: block; }
+.mock-body { padding: 16px; display: grid; gap: 10px; }
+.mock-row { height: 13px; border-radius: 5px; background: var(--surface-2); }
+.mock-card { border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: grid; gap: 7px; }
+.section { padding: 56px 0; }
+.sec-head { max-width: 640px; margin-bottom: 32px; }
+.feat-grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 640px){ .feat-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 980px){ .feat-grid.four { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 880px){ .feat-grid.six { grid-template-columns: repeat(3, 1fr); } }
+.seg-grid { display: grid; gap: 18px; grid-template-columns: 1fr; }
+@media (min-width: 760px){ .seg-grid { grid-template-columns: 1fr 1fr; } }
+.seg-card { padding: 26px; display: flex; flex-direction: column; gap: 14px; }
+.seg-card ul { list-style: none; padding: 0; display: grid; gap: 9px; }
+.seg-card li { display: flex; gap: 9px; align-items: center; font-size: 14px; }
+.seg-card li svg { width: 18px; height: 18px; color: var(--success); flex: none; }
+.steps3 { display: grid; gap: 20px; grid-template-columns: 1fr; counter-reset: s; }
+@media (min-width: 760px){ .steps3 { grid-template-columns: repeat(3, 1fr); } }
+.step3 { padding: 24px; }
+.step3 .num3 { width: 36px; height: 36px; border-radius: 50%; background: var(--primary-600); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: var(--font-display); margin-bottom: 12px; }
+.price-peek { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 760px){ .price-peek { grid-template-columns: repeat(3, 1fr); } }
+.pp { padding: 24px; display: flex; flex-direction: column; gap: 8px; }
+.pp.pop { border-color: var(--primary-500); box-shadow: 0 8px 24px color-mix(in srgb, var(--primary-500) 18%, transparent); }
+.pp .amt { font-family: var(--font-display); font-weight: 800; font-size: 30px; color: var(--text-strong); }
+.quotes { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 760px){ .quotes { grid-template-columns: repeat(3, 1fr); } }
+.cta-band { background: var(--ai-gradient); color: #fff; border-radius: var(--r-xl); padding: 44px 28px; text-align: center; }
+.cta-band h2 { color: #fff; }
+.logos { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; opacity: .7; }
+.logos .lg { height: 26px; padding: 0 14px; display: flex; align-items: center; border: 1px solid var(--border); border-radius: 8px; font-weight: 700; font-size: 13px; color: var(--text-muted); }
+
+/* ===== Fitur ===== */
+.pillar { display: grid; gap: 24px; align-items: center; padding: 44px 0; border-bottom: 1px solid var(--border); }
+@media (min-width: 860px){ .pillar { grid-template-columns: 1fr 1fr; } .pillar.rev .vis { order: -1; } }
+.vis { aspect-ratio: 4/3; padding: 20px; display: grid; gap: 10px; align-content: center; }
+.vis .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.phase-tag { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--primary-600); background: var(--primary-50); padding: 2px 8px; border-radius: 99px; }
+
+/* Tabel perbandingan (fitur & harga) */
+.cmp-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--r-lg); -webkit-overflow-scrolling: touch; }
+.cmp { width: 100%; }
+.cmp svg { width: 18px; height: 18px; color: var(--success); }
+.cmp td.cmp-c { text-align: center; }
+.cmp .cmp-no { color: var(--text-faint); }
+/* 3-kolom (fitur "Apa yang bisa kamu buat"): kolom Guru/Dosen sempit → muat di HP tanpa scroll */
+.cmp:not(.cmp-harga) th:nth-child(n+2) { text-align: center; width: 80px; }
+@media (max-width: 480px){
+  .cmp:not(.cmp-harga) th:nth-child(n+2) { width: 58px; }
+  .cmp th, .cmp td { padding: 12px 10px; }
+}
+/* 5-kolom (harga): tetap scroll horizontal; kolom pertama lengket agar konteks terjaga */
+.cmp.cmp-harga { min-width: 640px; }
+.cmp.cmp-harga th, .cmp.cmp-harga td { text-align: center; }
+.cmp.cmp-harga td:first-child, .cmp.cmp-harga th:first-child { text-align: left; position: sticky; left: 0; background: var(--surface); }
+.cmp.cmp-harga tbody tr:hover td:first-child { background: var(--surface-2); }
+.cmp.cmp-harga svg { margin: 0 auto; }
+
+/* ===== Harga ===== */
+.price-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 680px){ .price-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1080px){ .price-grid { grid-template-columns: repeat(4, 1fr); } }
+/* Mobile: kartu Pro (Populer) di urutan teratas tumpukan (design.md §9.A.3) */
+@media (max-width: 679.98px){ .price-grid .plan.pop { order: -1; } }
+.plan { padding: 24px; display: flex; flex-direction: column; gap: 6px; position: relative; }
+.plan.pop { border-color: var(--primary-500); box-shadow: 0 10px 30px color-mix(in srgb, var(--primary-500) 18%, transparent); }
+.plan .amt { font-family: var(--font-display); font-weight: 800; font-size: 30px; color: var(--text-strong); margin: 6px 0; }
+.plan ul { list-style: none; padding: 0; display: grid; gap: 9px; margin: 14px 0; }
+.plan li { display: flex; gap: 8px; font-size: 13px; color: var(--text-muted); align-items: flex-start; }
+.plan li svg { width: 16px; height: 16px; color: var(--success); flex: none; margin-top: 1px; }
+.plan .btn { margin-top: auto; }
+
+/* Toggle Bulanan/Tahunan (harga): ringkas — badge hemat diganti tag kecil */
+.price-toggle { margin-inline: auto; }
+.price-toggle .save-tag { font-size: 11px; font-weight: 700; color: var(--success); margin-left: 5px; }
+
+/* FAQ accordion (harga & bantuan) */
+.faq summary { cursor: pointer; padding: 14px 16px; font-weight: 600; font-size: 15px; color: var(--text-strong); list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; transition: background .15s; }
+.faq summary:hover { background: var(--surface-2); }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary svg { width: 18px; height: 18px; flex: none; color: var(--text-faint); transition: transform .2s; }
+.faq details { border-bottom: 1px solid var(--border); }
+.faq details:last-child { border-bottom: 0; }
+.faq details[open] summary { color: var(--primary-700); }
+.faq details[open] summary svg { transform: rotate(180deg); color: var(--primary-600); }
+.faq p { padding: 0 16px 16px; color: var(--text-muted); font-size: 14px; line-height: 1.6; }
+
+/* ===== Tentang ===== */
+.about-vals { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 760px){ .about-vals { grid-template-columns: repeat(3, 1fr); } }
+.about-story { display: grid; gap: 24px; align-items: center; }
+@media (min-width: 860px){ .about-story { grid-template-columns: 1fr 1fr; } }
+
+/* ===== Bantuan ===== */
+.help-hero { padding: 48px 16px 8px; text-align: center; }
+.help-search { max-width: 520px; margin: 18px auto 0; }
+.help-cats { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px; }
+.help-contact { display: grid; gap: 16px; grid-template-columns: 1fr; margin-top: 24px; }
+@media (min-width: 680px){ .help-contact { grid-template-columns: 1fr 1fr; } }
+
+/* Anchor target offset utk smooth-scroll di bawah nav sticky */
+#cara { scroll-margin-top: 72px; }
