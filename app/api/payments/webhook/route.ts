@@ -15,6 +15,9 @@ import { verifyTransaction } from "@/lib/server/pakasir";
 import { adminClient } from "@/lib/server/supabase";
 import { getPostHogClient } from "@/lib/posthog-server";
 
+/** warn migration 0008 belum jalan: sekali saja per proses (pola register_export di export/pdf) */
+let warnedReferralConversionMissing = false;
+
 export async function POST(req: Request) {
   let body: { order_id?: string; status?: string; amount?: number };
   try {
@@ -65,6 +68,33 @@ export async function POST(req: Request) {
     // 500 → Pakasir akan mengirim ulang notifikasi (retry)
     return NextResponse.json({ error: "SETTLE_GAGAL" }, { status: 500 });
   }
+  // Bonus referral: pembelian lunas PERTAMA teman → pengundang +10% kredit
+  // (migration 0008, idempoten via order_id). Best-effort — JANGAN gagalkan
+  // respons webhook hanya karena bonus referral gagal (settle sudah sukses).
+  try {
+    const { error: refErr } = await admin.rpc("award_referral_conversion", {
+      p_order_id: orderId,
+    });
+    if (refErr) {
+      const e = refErr as { code?: string; message?: string };
+      if (
+        e.code === "PGRST202" ||
+        (e.message ?? "").includes("award_referral_conversion")
+      ) {
+        if (!warnedReferralConversionMissing) {
+          warnedReferralConversionMissing = true;
+          console.warn(
+            "AjarKit: fungsi award_referral_conversion belum ada — jalankan migration 0008 (bonus referral tidak diberikan).",
+          );
+        }
+      } else {
+        console.error("AjarKit: award_referral_conversion gagal", refErr);
+      }
+    }
+  } catch (e) {
+    console.error("AjarKit: award_referral_conversion gagal", e);
+  }
+
   const row = settled as { user_id?: string; amount?: number; type?: string } | null;
   const phog = getPostHogClient();
   phog.capture({

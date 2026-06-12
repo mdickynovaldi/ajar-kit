@@ -114,13 +114,31 @@ try {
     .single();
   expect(!profErr && prof, "trigger handle_new_user membuat baris profiles", profErr?.message);
   expect(prof?.role === "guru", "role dari metadata signup", `role=${prof?.role}`);
-  expect(prof?.credits === 320, "bonus kredit awal 320 (cache)", `credits=${prof?.credits}`);
+
+  // bonus pendaftaran dibaca dinamis dari ledger (50 sejak 0007_free_tier);
+  // semua angka saldo di bawah dihitung relatif terhadap nilai ini
+  const { data: bonusRow, error: bonusErr } = await sb
+    .from("credit_ledger")
+    .select("delta")
+    .eq("user_id", userId)
+    .eq("ref_id", "signup-bonus")
+    .single();
+  const BONUS = bonusRow?.delta ?? 50;
+  expect(
+    !bonusErr && bonusRow?.delta === 50,
+    "ledger signup-bonus = 50 (free tier, migration 0007)",
+    bonusErr?.message ?? `delta=${bonusRow?.delta}`,
+  );
+  expect(prof?.credits === BONUS, `bonus kredit awal ${BONUS} (cache)`, `credits=${prof?.credits}`);
 
   const { data: bal0 } = await sb.rpc("credit_balance");
-  expect(bal0 === 320, "credit_balance() dari ledger = 320", `balance=${bal0}`);
+  expect(bal0 === BONUS, `credit_balance() dari ledger = ${BONUS}`, `balance=${bal0}`);
 
   // ---------- 3. Generate: potong kredit atomik ----------
   console.log("\n2. Generate dokumen (RPC generate_documents)");
+  const GEN_COST = 30; // harus < bonus pendaftaran + REGEN_COST agar alur uji muat di saldo awal
+  const REGEN_COST = 8;
+  const TOPUP_CREDITS = 300;
   const jobRef = `job-smoke-${stamp}`;
   const docsPayload = [
     {
@@ -142,24 +160,25 @@ try {
   ];
   const { data: gen, error: genErr } = await sb.rpc("generate_documents", {
     p_job_ref: jobRef,
-    p_cost: 85,
+    p_cost: GEN_COST,
     p_docs: docsPayload,
   });
   expect(!genErr, "generate_documents sukses", genErr?.message);
   expect(gen?.length === 2, "2 dokumen dibuat", `dapat ${gen?.length}`);
 
+  const afterGen = BONUS - GEN_COST;
   const { data: bal1 } = await sb.rpc("credit_balance");
-  expect(bal1 === 235, "kredit terpotong 85 → 235", `balance=${bal1}`);
+  expect(bal1 === afterGen, `kredit terpotong ${GEN_COST} → ${afterGen}`, `balance=${bal1}`);
 
   // idempoten: panggil ulang ref sama → tidak memotong lagi
   const { data: gen2, error: gen2Err } = await sb.rpc("generate_documents", {
     p_job_ref: jobRef,
-    p_cost: 85,
+    p_cost: GEN_COST,
     p_docs: docsPayload,
   });
   const { data: bal2 } = await sb.rpc("credit_balance");
   expect(
-    !gen2Err && bal2 === 235 && gen2?.length === 2,
+    !gen2Err && bal2 === afterGen && gen2?.length === 2,
     "idempoten: ref sama tidak memotong ulang & kembalikan dokumen yang sama",
     gen2Err?.message ?? `balance=${bal2}, docs=${gen2?.length}`,
   );
@@ -172,40 +191,50 @@ try {
   });
   const { data: bal3 } = await sb.rpc("credit_balance");
   expect(
-    brokeErr?.message?.includes("KREDIT_TIDAK_CUKUP") && bal3 === 235,
+    brokeErr?.message?.includes("KREDIT_TIDAK_CUKUP") && bal3 === afterGen,
     "saldo kurang → error KREDIT_TIDAK_CUKUP, kredit utuh",
     brokeErr?.message ?? `balance=${bal3}`,
   );
 
   // ---------- 4. spend_credits (regenerasi editor) ----------
+  const afterRegen = afterGen - REGEN_COST;
   const { data: spent, error: spendErr } = await sb.rpc("spend_credits", {
-    p_amount: 8,
+    p_amount: REGEN_COST,
     p_ref: `regen-${stamp}`,
   });
-  expect(!spendErr && spent === 227, "spend_credits 8 → 227", spendErr?.message ?? `=${spent}`);
+  expect(
+    !spendErr && spent === afterRegen,
+    `spend_credits ${REGEN_COST} → ${afterRegen}`,
+    spendErr?.message ?? `=${spent}`,
+  );
 
   // ---------- 5. Pembayaran simulasi ----------
   console.log("\n3. Top-up & langganan (RPC simulate_payment)");
   const orderId = `order-smoke-${stamp}`;
+  const afterTopup = afterRegen + TOPUP_CREDITS;
   const { data: paid, error: payErr } = await sb.rpc("simulate_payment", {
     p_order_id: orderId,
     p_type: "topup",
-    p_label: "Top-up 300 kredit",
+    p_label: `Top-up ${TOPUP_CREDITS} kredit`,
     p_method: "qris",
     p_amount: 39000,
-    p_credits: 300,
+    p_credits: TOPUP_CREDITS,
   });
-  expect(!payErr && paid === 527, "top-up 300 → saldo 527", payErr?.message ?? `=${paid}`);
+  expect(
+    !payErr && paid === afterTopup,
+    `top-up ${TOPUP_CREDITS} → saldo ${afterTopup}`,
+    payErr?.message ?? `=${paid}`,
+  );
 
   const { data: paid2 } = await sb.rpc("simulate_payment", {
     p_order_id: orderId,
     p_type: "topup",
-    p_label: "Top-up 300 kredit",
+    p_label: `Top-up ${TOPUP_CREDITS} kredit`,
     p_method: "qris",
     p_amount: 39000,
-    p_credits: 300,
+    p_credits: TOPUP_CREDITS,
   });
-  expect(paid2 === 527, "idempoten: order_id sama tidak menambah ulang", `=${paid2}`);
+  expect(paid2 === afterTopup, "idempoten: order_id sama tidak menambah ulang", `=${paid2}`);
 
   const { data: trxs } = await sb.from("transactions").select("*");
   expect(trxs?.length === 1 && trxs[0].status === "lunas", "1 transaksi lunas tercatat", `n=${trxs?.length}`);
@@ -219,7 +248,11 @@ try {
     p_credits: 0,
   });
   const { data: prof2 } = await sb.from("profiles").select("plan").eq("id", userId).single();
-  expect(!subErr && subBal === 527 && prof2?.plan === "pro", "langganan Pro → plan=pro, kredit tetap", subErr?.message ?? `plan=${prof2?.plan}`);
+  expect(
+    !subErr && subBal === afterTopup && prof2?.plan === "pro",
+    "langganan Pro → plan=pro, kredit tetap",
+    subErr?.message ?? `plan=${prof2?.plan}`,
+  );
 
   // ---------- 6. CRUD dokumen via RLS ----------
   console.log("\n4. Dokumen, notifikasi & RLS");
@@ -274,7 +307,7 @@ try {
     .select("credits");
   const { data: balAkhir } = await sb.rpc("credit_balance");
   expect(
-    (!credPatch || credPatch.length === 0 || credPatch[0]?.credits !== 999999) && balAkhir === 527,
+    (!credPatch || credPatch.length === 0 || credPatch[0]?.credits !== 999999) && balAkhir === afterTopup,
     "kolom profiles.credits tidak bisa diubah klien",
     `cache=${JSON.stringify(credPatch)}, ledger=${balAkhir}`,
   );

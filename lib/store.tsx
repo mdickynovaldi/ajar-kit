@@ -46,6 +46,8 @@ import {
 } from "@/data/mock";
 
 const STORAGE_KEY = "ajarkit-state-v1";
+/** kode referral tertunda (diisi dari /daftar?ref=…), diterapkan setelah login */
+const REF_STORAGE_KEY = "ajarkit-ref";
 
 /* ============================== state ============================== */
 
@@ -109,6 +111,14 @@ export interface GenerationInput {
   }[];
   notifTitle: string;
   notifBody: string;
+}
+
+export interface ReferralInfo {
+  code: string;
+  invited: number;
+  /** teman yang sudah melakukan pembelian pertama (ledger 'referral_conversion') */
+  converted: number;
+  earned: number;
 }
 
 export interface PaymentInput {
@@ -186,6 +196,12 @@ export interface AppStore extends PersistedState {
   >;
   /** Tarik ulang saldo/transaksi/plan dari server (setelah webhook settle). */
   refreshFromServer: () => Promise<void>;
+  /** Simpan kode referral tertunda (localStorage 'ajarkit-ref'); diterapkan
+      otomatis via RPC apply_referral_code begitu user login (mode Supabase). */
+  setPendingReferral: (code: string | null) => void;
+  /** Statistik referral utk halaman "Ajak Teman" (mock: data dummy;
+      Supabase: RPC referral_stats, fallback select referral_code). */
+  getReferralInfo: () => Promise<ReferralInfo | null>;
   /** Token akses sesi aktif utk header Authorization Bearer ke API server
       (mis. /api/export/*). Mode mock / belum login → null. */
   getAccessToken: () => Promise<string | null>;
@@ -388,6 +404,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     mode === "supabase" ? "loading" : "signedIn",
   );
   const [supaUser, setSupaUser] = useState<User | null>(null);
+  // kode referral tertunda (dari /daftar?ref=…) — diterapkan setelah login
+  const [pendingReferral, setPendingReferralState] = useState<string | null>(null);
+  // kode yang sudah dicoba diterapkan pada sesi ini (cegah panggilan ganda)
+  const refAttemptedRef = useRef<string | null>(null);
   // mode Supabase: ruang + antrean review nyata (mock: diturunkan di getter)
   const [wsInfo, setWsInfo] = useState<WorkspaceSummary | null>(null);
   const [wsReviews, setWsReviews] = useState<ReviewItem[]>([]);
@@ -1489,6 +1509,91 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setSupaUser((u) => (u ? { ...u, plan: profRes.data.plan as Plan } : u));
   }, [mode]);
 
+  /* ----- referral (migration 0008 + revisi 0009) ----- */
+
+  const setPendingReferral = useCallback((code: string | null) => {
+    const v = code?.trim().toUpperCase() || null;
+    setPendingReferralState(v);
+    try {
+      if (v) localStorage.setItem(REF_STORAGE_KEY, v);
+      else localStorage.removeItem(REF_STORAGE_KEY);
+    } catch {
+      /* penyimpanan penuh/diblokir — abaikan */
+    }
+  }, []);
+
+  // hidrasi kode tertunda dari localStorage (sekali, SSR-safe)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(REF_STORAGE_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- hidrasi localStorage satu kali; render pertama wajib sama dengan SSR
+      if (saved) setPendingReferralState(saved.trim().toUpperCase());
+    } catch {
+      /* abaikan */
+    }
+  }, []);
+
+  // mode Supabase: begitu signedIn & ada kode tertunda → terapkan SEKALI,
+  // lalu hapus kode apa pun hasilnya (kode salah tidak dicoba terus-menerus).
+  // 0009: apply hanya mencatat referred_by — TANPA bonus langsung; bonus
+  // kedua pihak baru cair saat teman melakukan pembelian lunas pertama.
+  useEffect(() => {
+    if (mode !== "supabase" || authStatus !== "signedIn") return;
+    const code = pendingReferral;
+    if (!code || refAttemptedRef.current === code) return;
+    refAttemptedRef.current = code;
+    const sb = getSupabase()!;
+    // PENTING: rpc() supabase-js lazy — wajib .then() agar request terkirim
+    void sb.rpc("apply_referral_code", { p_code: code }).then(({ data, error }) => {
+      setPendingReferral(null); // hapus apa pun hasilnya
+      if (error) {
+        // PGRST202 = migration 0008/0009 belum dijalankan — jangan berisik
+        const e = error as { code?: string; message?: string };
+        if (e.code !== "PGRST202") {
+          console.error("AjarKit: apply_referral_code gagal", error);
+        }
+        return;
+      }
+      // saldo TIDAK berubah saat apply (0009) — refresh ringan tetap aman
+      if (data === "OK") void refreshFromServer();
+    });
+  }, [mode, authStatus, pendingReferral, setPendingReferral, refreshFromServer]);
+
+  const getReferralInfo = useCallback(async (): Promise<ReferralInfo | null> => {
+    if (mode !== "supabase") {
+      // mode mock: data dummy utk pratinjau UI
+      return { code: "AJAR1234", invited: 3, converted: 1, earned: 42 };
+    }
+    if (!uidRef.current) return null;
+    const sb = getSupabase()!;
+    const { data, error } = await sb.rpc("referral_stats");
+    if (!error && data && typeof data === "object") {
+      const d = data as {
+        code?: string | null;
+        invited?: number;
+        converted?: number;
+        earned?: number;
+      };
+      if (d.code) {
+        return {
+          code: d.code,
+          invited: d.invited ?? 0,
+          converted: d.converted ?? 0,
+          earned: d.earned ?? 0,
+        };
+      }
+    }
+    // fallback (RPC error / migrasi belum jalan): coba kolom referral_code
+    const { data: prof, error: profErr } = await sb
+      .from("profiles")
+      .select("referral_code")
+      .eq("id", uidRef.current)
+      .single();
+    const code = (prof as { referral_code?: string | null } | null)?.referral_code;
+    if (!profErr && code) return { code, invited: 0, converted: 0, earned: 0 };
+    return null;
+  }, [mode]);
+
   const getAccessToken = useCallback(async (): Promise<string | null> => {
     if (mode !== "supabase") return null;
     const sb = getSupabase()!;
@@ -1606,6 +1711,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       completePayment,
       startCheckout,
       refreshFromServer,
+      setPendingReferral,
+      getReferralInfo,
       getAccessToken,
       signOut,
       toggleTheme,
@@ -1646,6 +1753,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     completePayment,
     startCheckout,
     refreshFromServer,
+    setPendingReferral,
+    getReferralInfo,
     getAccessToken,
     signOut,
     toggleTheme,

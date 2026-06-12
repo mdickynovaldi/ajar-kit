@@ -187,6 +187,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "GENERATE_GAGAL" }, { status: 500 });
   }
 
+  // Catatan referral (migration 0009): bonus HANYA saat pembelian lunas
+  // pertama teman — award_referral_conversion dipanggil dari webhook
+  // pembayaran, bukan dari sini (tidak ada lagi reward generate).
+
   const rows = (data ?? []) as { id: string; title: string; type: DocType }[];
   const contentByTitle = new Map(body.docs.map((d, i) => [d.title, contents[i]]));
 

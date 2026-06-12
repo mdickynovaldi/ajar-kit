@@ -62,6 +62,13 @@ const APP_NAV2: NavItem[] = [
       p.startsWith("/app/tagihan"),
   },
   {
+    id: "referral",
+    label: "Ajak Teman",
+    icon: "gift",
+    href: "/app/referral",
+    match: (p) => p.startsWith("/app/referral"),
+  },
+  {
     id: "pengaturan",
     label: "Pengaturan",
     icon: "settings",
@@ -96,6 +103,7 @@ const TITLES: [prefix: string, title: string][] = [
   ["/app/kredit", "Kredit & Langganan"],
   ["/app/langganan", "Langganan"],
   ["/app/tagihan", "Riwayat Tagihan"],
+  ["/app/referral", "Ajak Teman"],
   ["/app/pengaturan", "Pengaturan"],
   ["/app/notifikasi", "Notifikasi"],
   ["/app", "Beranda"],
@@ -188,6 +196,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               cursor: "pointer",
               font: "inherit",
               textAlign: "left",
+              color: "red",
             }}
           >
             <Icon name="logout" />

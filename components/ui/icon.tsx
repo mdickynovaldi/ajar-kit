@@ -51,6 +51,7 @@ const ICONS = {
   alert: `<path ${P} d="M12 3 2 20h20z"/><path ${P} d="M12 10v4M12 17h.01"/>`,
   logout: `<path ${P} d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path ${P} d="M10 17 5 12l5-5M5 12h12"/>`,
   flask: `<path ${P} d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 18l-5-9V3"/><path ${P} d="M7.5 14h9"/>`,
+  gift: `<rect x="3" y="8" width="18" height="4" rx="1" ${P}/><path ${P} d="M12 8v13M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/><path ${P} d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/>`,
   // Logo AjarKit: dokumen (RPS) berlipat + garis daftar + percikan tongkat ajaib
   logo: `<path ${P} d="M5 4.2A1.2 1.2 0 0 1 6.2 3h7.1L17 6.7v8.1A1.2 1.2 0 0 1 15.8 16H6.2A1.2 1.2 0 0 1 5 14.8z"/><path ${P} d="M13 3v3.5h3.5"/><path ${P} d="M7.6 9.2h6.2M7.6 11.6h6.2M7.6 14h3.6"/><path ${P} d="M18.6 16.2l1 2.2 2.2 1-2.2 1-1 2.2-1-2.2-2.2-1 2.2-1z" fill="currentColor" stroke="none"/>`,
 } as const;

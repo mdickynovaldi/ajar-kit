@@ -5,6 +5,7 @@
    ringkasan sticky, sheet QRIS + VA (mock). */
 
 import { useRef, useState, type CSSProperties } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import { Icon } from "@/components/ui/icon";
@@ -179,10 +180,25 @@ export default function KreditPage() {
       <h1 className="t-h1" style={{ marginBottom: 4 }}>
         Isi Ulang Kredit
       </h1>
-      <p className="muted" style={{ marginBottom: 22 }}>
+      <p className="muted" style={{ marginBottom: 14 }}>
         Bayar sesuai pakai. Kredit tidak hangus dan berlaku untuk semua jenis
         dokumen.
       </p>
+
+      {/* Ajakan referral — kredit gratis tanpa top-up */}
+      <div className="banner info" style={{ marginBottom: 22, alignItems: "center" }}>
+        <Icon name="gift" />
+        <span className="t-small grow">
+          Mau kredit gratis? Ajak teman pakai AjarKit — dapat{" "}
+          <b>bonus 10% kredit</b> dari pembelian pertamanya.{" "}
+          <Link
+            href="/app/referral"
+            style={{ color: "var(--primary-600)", fontWeight: 600 }}
+          >
+            Ajak sekarang →
+          </Link>
+        </span>
+      </div>
 
       <div className="kredit-grid">
         <div className="stack" style={{ "--gap": "24px" } as CSSProperties}>

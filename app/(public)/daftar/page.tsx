@@ -4,7 +4,7 @@
    DUAL MODE: mode mock = simulasi (tidak berubah); mode Supabase = signUp nyata
    (profil + bonus kredit dibuat trigger DB dari metadata { nama, role }). */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
@@ -38,10 +38,28 @@ export default function DaftarPage() {
   const [nama, setNama] = useState("");
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
+  const [refCode, setRefCode] = useState("");
   const [agree, setAgree] = useState(false);
   const [errors, setErrors] = useState<{ nama?: string; email?: string; pw?: string }>({});
   const [emailTaken, setEmailTaken] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // ?ref=KODE → prefill field referral + simpan sebagai kode tertunda.
+  // Next 16: useSearchParams butuh Suspense saat prerender — halaman ini
+  // client component penuh, jadi baca window.location di useEffect saja.
+  const { setPendingReferral } = app;
+  useEffect(() => {
+    try {
+      const ref = new URLSearchParams(window.location.search).get("ref");
+      if (ref?.trim()) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- prefill dari URL satu kali; render pertama wajib sama dengan SSR
+        setRefCode(ref.trim().toUpperCase());
+        setPendingReferral(ref);
+      }
+    } catch {
+      /* abaikan */
+    }
+  }, [setPendingReferral]);
 
   const score = pwScore(pw);
   const strengthIdx = Math.max(0, score - 1);
@@ -52,6 +70,8 @@ export default function DaftarPage() {
     );
 
   async function daftarGoogle() {
+    // kode referral ikut tersimpan (localStorage) melewati redirect OAuth
+    setPendingReferral(refCode.trim() || null);
     if (app.mode === "supabase") {
       const sb = getSupabase()!;
       const { error: err } = await sb.auth.signInWithOAuth({
@@ -85,6 +105,8 @@ export default function DaftarPage() {
       return;
     }
     setLoading(true);
+    // kode referral dari field (editable) → diterapkan otomatis setelah login
+    setPendingReferral(refCode.trim() || null);
 
     if (app.mode === "supabase") {
       const sb = getSupabase()!;
@@ -263,6 +285,22 @@ export default function DaftarPage() {
                 (pw
                   ? `Kekuatan sandi: ${STRENGTH_LABELS[strengthIdx]}`
                   : "Gunakan kombinasi huruf & angka.")}
+            </p>
+          </div>
+
+          <div className="field">
+            <label htmlFor="refcode">Kode referral (opsional)</label>
+            <input
+              className="input"
+              id="refcode"
+              placeholder="Mis. ABCDEFGH"
+              autoComplete="off"
+              value={refCode}
+              onChange={(e) => setRefCode(e.target.value.toUpperCase())}
+            />
+            <p className="help">
+              Punya kode dari teman? Dapat bonus saat melakukan pembelian
+              pertama.
             </p>
           </div>
 
