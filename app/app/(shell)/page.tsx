@@ -3,11 +3,9 @@
 /* AjarKit — Beranda / Dashboard (/app).
    Porting Ajarkit/app-beranda.html · design.md §9.D.1 · prd.md §8.2. */
 
-import { useState } from "react";
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { EmptyState, Skeleton, StatusBadge } from "@/components/ui/controls";
-import { useToast } from "@/components/ui/toast";
 import { useApp } from "@/lib/store";
 import {
   DOC_TYPES,
@@ -89,8 +87,6 @@ function HomeSkeleton() {
 
 export default function BerandaPage() {
   const app = useApp();
-  const toast = useToast();
-  const [showBanner, setShowBanner] = useState(true);
 
   if (!app.hydrated) return <HomeSkeleton />;
 
@@ -105,34 +101,6 @@ export default function BerandaPage() {
 
   return (
     <>
-      {/* Banner kontekstual — verifikasi email */}
-      {showBanner && (
-        <div className="banner warn" style={{ marginBottom: 18 }}>
-          <Icon name="alert" />
-          <div className="grow">
-            <strong style={{ color: "inherit" }}>Verifikasi email belum selesai.</strong>
-            <p className="t-small" style={{ marginTop: 2, opacity: 0.9 }}>
-              Cek kotak masukmu untuk membuka semua fitur.
-            </p>
-          </div>
-          <button
-            className="btn sm"
-            style={{ background: "var(--warning)", color: "#fff", flex: "none" }}
-            onClick={() => toast("Email verifikasi dikirim ulang")}
-          >
-            Kirim ulang
-          </button>
-          <button
-            className="iconbtn"
-            aria-label="Tutup pemberitahuan"
-            style={{ color: "inherit", flex: "none", margin: "-8px -6px" }}
-            onClick={() => setShowBanner(false)}
-          >
-            <Icon name="x" style={{ width: 18, height: 18 }} />
-          </button>
-        </div>
-      )}
-
       {/* Sapaan + indikator kredit (desktop) */}
       <div className="greet-grid" style={{ marginBottom: 22 }}>
         <div>

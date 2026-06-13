@@ -466,9 +466,20 @@ function ttdTable(ttd: DocPdfTtd): Table {
 }
 
 /* ----- susun seluruh isi dokumen (urutan = rpp-pdf.tsx) ----- */
+/* Section "lampiran" apa pun (lampiran-lkpd, dll.) — diposisikan SETELAH
+   tabel pertemuan & SEBELUM Daftar Pustaka (cermin rpp-pdf). */
+function isLampiran(s: { id: string; title: string }): boolean {
+  return s.id.startsWith("lampiran") || /^lampiran\b/i.test(s.title.trim());
+}
+
 function buildChildren(data: RppDocxInput): (Paragraph | Table)[] {
   const pustaka = data.sections.filter((s) => s.id === "pustaka");
-  const sections = data.sections.filter((s) => s.id !== "pustaka");
+  const lampiran = data.sections.filter(
+    (s) => s.id !== "pustaka" && isLampiran(s),
+  );
+  const sections = data.sections.filter(
+    (s) => s.id !== "pustaka" && !isLampiran(s),
+  );
 
   const children: (Paragraph | Table)[] = [
     ...kopChildren(data.instansi),
@@ -486,6 +497,12 @@ function buildChildren(data: RppDocxInput): (Paragraph | Table)[] {
 
   for (const p of data.kegiatan ?? []) {
     children.push(...kegiatanChildren(p));
+  }
+
+  // lampiran → setelah pertemuan, sebelum daftar pustaka
+  for (const sec of lampiran) {
+    children.push(sectionHeading(sec.title));
+    children.push(...blockParagraphs(sec.blocks));
   }
 
   for (const sec of pustaka) {

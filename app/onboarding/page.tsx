@@ -8,6 +8,7 @@ import Link from "next/link";
 import posthog from "posthog-js";
 import { Button, Chip } from "@/components/ui/controls";
 import { Icon } from "@/components/ui/icon";
+import { useToast } from "@/components/ui/toast";
 import { MAPEL_SMP, mapelForJenjang } from "@/lib/constants";
 import { useApp } from "@/lib/store";
 import type { User } from "@/lib/types";
@@ -52,7 +53,7 @@ const CFG_GURU: ObConfig = {
   titles: [
     "Halo 👋 Ceritakan sedikit tentang kelasmu",
     "Mata pelajaran yang kamu ampu",
-    "Sekolah & tujuanmu",
+    "Identitas sekolah (untuk kop & tanda tangan)",
     "Mari buat dokumen pertamamu",
   ],
 };
@@ -75,7 +76,7 @@ const CFG_DOSEN: ObConfig = {
   titles: [
     "Halo 👋 Tentang program studimu",
     "Mata kuliah yang kamu ampu",
-    "Acuan & institusi",
+    "Identitas institusi (untuk kop & pengesahan)",
     "Mari buat dokumen pertamamu",
   ],
 };
@@ -83,12 +84,13 @@ const CFG_DOSEN: ObConfig = {
 const SUBS = [
   "Biar generator langsung relevan.",
   "Pilih yang sesuai — bisa lebih dari satu.",
-  "Sedikit lagi, hampir selesai.",
+  "Dipakai untuk kop surat & blok tanda tangan di setiap dokumen.",
   "Field sudah terisi dari jawabanmu.",
 ];
 
 export default function OnboardingPage() {
   const app = useApp();
+  const toast = useToast();
   const isDosen = app.role === "dosen";
   const cfg = isDosen ? CFG_DOSEN : CFG_GURU;
 
@@ -99,8 +101,19 @@ export default function OnboardingPage() {
   const [kelas, setKelas] = useState<string[]>([]);
   const [mapel, setMapel] = useState<string[]>([]);
   const [mapelQuery, setMapelQuery] = useState("");
-  const [sekolah, setSekolah] = useState("");
-  const [tujuan, setTujuan] = useState<string>("");
+
+  /* ----- Step 3: identitas instansi (kop & tanda tangan dokumen) ----- */
+  const [instNama, setInstNama] = useState("");
+  const [instInduk, setInstInduk] = useState("");
+  const [instAlamat, setInstAlamat] = useState("");
+  const [instLogo, setInstLogo] = useState("");
+  const [kota, setKota] = useState("");
+  const [pimJabatan, setPimJabatan] = useState(
+    app.role === "dosen" ? "Ketua Program Studi" : "Kepala Sekolah",
+  );
+  const [pimNama, setPimNama] = useState("");
+  const [pimNip, setPimNip] = useState("");
+  const [nip, setNip] = useState("");
 
   // peran berubah (live) → reset pilihan sesuai opsi peran tsb
   // (pola "adjust state during render", tanpa effect)
@@ -112,12 +125,32 @@ export default function OnboardingPage() {
     setKelas([]);
     setMapel([]);
     setMapelQuery("");
-    setTujuan("");
+    setPimJabatan(app.role === "dosen" ? "Ketua Program Studi" : "Kepala Sekolah");
   }
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [step]);
+
+  /* dua isian wajib agar kop & blok ttd tidak kosong di PDF/DOCX */
+  const instansiValid = instNama.trim() !== "" && pimNama.trim() !== "";
+
+  /* logo → data-URL base64 (maks 400KB; cermin Pengaturan → Profil Instansi) */
+  function pilihLogo(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (!/^image\/(png|jpe?g)$/.test(f.type)) {
+      toast("Format logo harus PNG/JPG", false);
+      return;
+    }
+    if (f.size > 400_000) {
+      toast("Logo terlalu besar (maks 400KB)", false);
+      return;
+    }
+    const r = new FileReader();
+    r.onload = () => setInstLogo(String(r.result));
+    r.readAsDataURL(f);
+  }
 
   const toggle = (list: string[], v: string) =>
     list.includes(v) ? list.filter((x) => x !== v) : [...list, v];
@@ -140,24 +173,35 @@ export default function OnboardingPage() {
   const go = (d: number) => setStep((s) => Math.min(TOTAL, Math.max(1, s + d)));
 
   const finish = () => {
-    // simpan jawaban wizard ke profil (merge di atas mock, hanya yang terisi)
+    // simpan jawaban wizard + identitas instansi (kop & ttd) ke profil
+    const patch: Partial<User> = {
+      // identitas instansi → kop surat & blok tanda tangan dokumen
+      namaInstansi: instNama.trim(),
+      instansiInduk: instInduk.trim(),
+      alamatInstansi: instAlamat.trim(),
+      logoInstansi: instLogo,
+      kota: kota.trim(),
+      pimpinanJabatan: pimJabatan.trim(),
+      pimpinanNama: pimNama.trim(),
+      pimpinanNip: pimNip.trim(),
+      nip: nip.trim(),
+    };
     if (isDosen) {
-      const patch: Partial<User> = {};
-      if (sekolah.trim()) patch.pt = sekolah.trim();
+      if (instNama.trim()) patch.pt = instNama.trim();
       if (kelas.length) patch.prodi = kelas.join(", ");
       if (mapel.length) patch.mataKuliah = mapel;
-      if (Object.keys(patch).length) app.updateProfile(patch);
     } else {
-      const patch: Partial<User> = { jenjang };
+      patch.jenjang = jenjang;
       if (kelas.length) patch.kelas = kelas.join(", ");
       if (mapel.length) patch.mapel = mapel;
-      if (sekolah.trim()) patch.sekolah = sekolah.trim();
-      app.updateProfile(patch);
+      // sekolah = nama instansi (fallback identitas dokumen)
+      if (instNama.trim()) patch.sekolah = instNama.trim();
     }
+    app.updateProfile(patch);
     posthog.capture("onboarding_completed", {
       role: app.role,
       step_reached: step,
-      skipped: step < TOTAL,
+      has_instansi: instansiValid,
     });
     app.setOnboardingDone(true);
   };
@@ -178,9 +222,6 @@ export default function OnboardingPage() {
           <div className="ob-pbar" style={{ maxWidth: 160 }} aria-hidden="true">
             <span style={{ width: `${(step / TOTAL) * 100}%` }} />
           </div>
-          <Link className="t-small muted" href="/app" onClick={finish}>
-            Lewati
-          </Link>
         </header>
 
         <div className="ob-body">
@@ -245,29 +286,124 @@ export default function OnboardingPage() {
                 </div>
               </section>
 
-              {/* STEP 3 */}
+              {/* STEP 3 — identitas instansi (kop & tanda tangan) */}
               <section className={`step-panel${step === 3 ? " on" : ""}`}>
                 <div className="card pad-lg stack" style={{ "--gap": "14px" } as React.CSSProperties}>
                   <div className="field">
-                    <label htmlFor="sekolah">Nama sekolah / kampus (opsional)</label>
+                    <label htmlFor="instNama">
+                      {isDosen ? "Nama institusi / program studi" : "Nama sekolah"} *
+                    </label>
                     <input
                       className="input"
-                      id="sekolah"
-                      placeholder="Mis. SDN Merdeka 01"
-                      value={sekolah}
-                      onChange={(e) => setSekolah(e.target.value)}
+                      id="instNama"
+                      placeholder={isDosen ? "Mis. Universitas Negeri Malang" : "Mis. SMA Negeri 1 Singosari"}
+                      value={instNama}
+                      onChange={(e) => setInstNama(e.target.value)}
                     />
                   </div>
-                  <div>
-                    <span className="lbl">Tujuan utamamu</span>
-                    <div className="ob-chips">
-                      {cfg.tujuan.map((t) => (
-                        <Chip key={t} on={tujuan === t} onToggle={() => setTujuan((cur) => (cur === t ? "" : t))}>
-                          {t}
-                        </Chip>
-                      ))}
+
+                  <div className="row" style={{ gap: 14, alignItems: "center" }}>
+                    {instLogo ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- pratinjau data-URL
+                      <img
+                        src={instLogo}
+                        alt="Logo instansi"
+                        style={{ width: 52, height: 52, objectFit: "contain", borderRadius: 8, border: "1px solid var(--border)", background: "#fff" }}
+                      />
+                    ) : (
+                      <span className="doc-ic ic-blue" style={{ width: 52, height: 52 }}>
+                        <Icon name="school" />
+                      </span>
+                    )}
+                    <div className="row" style={{ gap: 8 }}>
+                      <label className="btn btn-secondary sm" style={{ cursor: "pointer" }}>
+                        Unggah logo
+                        <input type="file" accept="image/png,image/jpeg" onChange={pilihLogo} style={{ display: "none" }} />
+                      </label>
+                      {instLogo && (
+                        <Button variant="ghost" size="sm" onClick={() => setInstLogo("")}>
+                          Hapus
+                        </Button>
+                      )}
                     </div>
                   </div>
+
+                  <div className="field">
+                    <label htmlFor="instInduk">
+                      Instansi induk (baris atas kop — opsional)
+                    </label>
+                    <textarea
+                      className="textarea"
+                      id="instInduk"
+                      style={{ minHeight: 60 }}
+                      placeholder={isDosen ? "FAKULTAS …\nUNIVERSITAS …" : "PEMERINTAH PROVINSI …\nDINAS PENDIDIKAN"}
+                      value={instInduk}
+                      onChange={(e) => setInstInduk(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label htmlFor="instAlamat">Alamat instansi (opsional)</label>
+                    <input
+                      className="input"
+                      id="instAlamat"
+                      placeholder="Jl. … No. …, Kota, Provinsi, Kode Pos"
+                      value={instAlamat}
+                      onChange={(e) => setInstAlamat(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-2">
+                    <div className="field">
+                      <label htmlFor="pimNama">
+                        {isDosen ? "Nama Ketua Program Studi" : "Nama Kepala Sekolah"} *
+                      </label>
+                      <input
+                        className="input"
+                        id="pimNama"
+                        placeholder="Nama lengkap & gelar"
+                        value={pimNama}
+                        onChange={(e) => setPimNama(e.target.value)}
+                      />
+                    </div>
+                    <div className="field">
+                      <label htmlFor="pimNip">{isDosen ? "NIDN/NIP pimpinan" : "NIP Kepala Sekolah"} (opsional)</label>
+                      <input
+                        className="input"
+                        id="pimNip"
+                        placeholder="1980…"
+                        value={pimNip}
+                        onChange={(e) => setPimNip(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-2">
+                    <div className="field">
+                      <label htmlFor="kota">Kota (untuk tanggal tanda tangan)</label>
+                      <input
+                        className="input"
+                        id="kota"
+                        placeholder="Mis. Malang"
+                        value={kota}
+                        onChange={(e) => setKota(e.target.value)}
+                      />
+                    </div>
+                    <div className="field">
+                      <label htmlFor="nip">{isDosen ? "NIDN/NIP kamu" : "NIP kamu"} (opsional)</label>
+                      <input
+                        className="input"
+                        id="nip"
+                        placeholder="1985…"
+                        value={nip}
+                        onChange={(e) => setNip(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <p className="help">
+                    Tanda * wajib diisi. Semua ini bisa diubah nanti di Pengaturan → Profil Instansi.
+                  </p>
                 </div>
               </section>
 
@@ -318,8 +454,14 @@ export default function OnboardingPage() {
               Kembali
             </Button>
             {step < TOTAL && (
-              <Button type="button" className="grow" iconRight="chevR" onClick={() => go(1)}>
-                Lanjut
+              <Button
+                type="button"
+                className="grow"
+                iconRight="chevR"
+                disabled={step === 3 && !instansiValid}
+                onClick={() => go(1)}
+              >
+                {step === 3 && !instansiValid ? "Isi nama sekolah & kepala sekolah" : "Lanjut"}
               </Button>
             )}
           </div>

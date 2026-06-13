@@ -233,9 +233,21 @@ function RppSection({ sec }: { sec: DocPdfSection }) {
   );
 }
 
+/* Section "lampiran" apa pun (lampiran-lkpd, lampiran-materi, dll.) — id
+   berawalan "lampiran" atau judul diawali "Lampiran". Diposisikan SETELAH
+   tabel pertemuan & SEBELUM Daftar Pustaka. */
+function isLampiran(s: DocPdfSection): boolean {
+  return s.id.startsWith("lampiran") || /^lampiran\b/i.test(s.title.trim());
+}
+
 export function RppPdf({ data }: { data: RppPdfInput }) {
   const pustaka = data.sections.filter((s) => s.id === "pustaka");
-  const sections = data.sections.filter((s) => s.id !== "pustaka");
+  const lampiran = data.sections.filter(
+    (s) => s.id !== "pustaka" && isLampiran(s),
+  );
+  const sections = data.sections.filter(
+    (s) => s.id !== "pustaka" && !isLampiran(s),
+  );
   return (
     <Document title={data.title} author="AjarKit">
       <Page size="A4" orientation="portrait" style={r.page}>
@@ -255,6 +267,11 @@ export function RppPdf({ data }: { data: RppPdfInput }) {
 
         {(data.kegiatan ?? []).map((p, i) => (
           <KegiatanTable p={p} key={i} />
+        ))}
+
+        {/* lampiran → setelah pertemuan, sebelum daftar pustaka */}
+        {lampiran.map((s) => (
+          <RppSection sec={s} key={s.id} />
         ))}
 
         {pustaka.map((s) => (
